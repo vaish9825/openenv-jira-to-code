@@ -20,9 +20,9 @@ API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:11434/v1")
 MODEL_NAME = os.getenv("MODEL_NAME", "qwen3.5:2b")
 HF_TOKEN = os.getenv("HF_TOKEN", "dummy")
 
-TASK_NAME = "easy-bug-fix"
+TASK_NAME = "bug-fix"
 BENCHMARK = "jira-to-code"
-MAX_STEPS = 10
+MAX_STEPS = 20
 SUCCESS_SCORE_THRESHOLD = 1.0
 
 SYSTEM_PROMPT = textwrap.dedent(
