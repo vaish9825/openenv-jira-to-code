@@ -26,4 +26,4 @@ def health():
 # ✅ Ensure HF runs correctly
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 7860))
-    uvicorn.run("src.jira_to_code.server.app:app", host="0.0.0.0", port=port)
+    uvicorn.run("server.app:app", host="0.0.0.0", port=port)
