@@ -25,10 +25,14 @@ RUN uv pip install --system -r pyproject.toml
 # Copy the rest of the application files
 COPY openenv.yaml README.md inference.py ./
 COPY src/ ./src/
+COPY server/ ./server/
 
 # Change ownership to the non-root user
 RUN chown -R appuser:appuser /app
 USER appuser
 
+# Expose the standard Hugging Face port
 EXPOSE 7860
-CMD ["uvicorn", "src.jira_to_code.server.app:app", "--host", "0.0.0.0", "--port", "7860"]
+
+# The standard entrypoint required by OpenEnv
+CMD ["uvicorn", "server.app:app", "--host", "0.0.0.0", "--port", "7860"]

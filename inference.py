@@ -12,7 +12,7 @@ from dotenv import load_dotenv # <-- Add this
 load_dotenv()
 
 # Our environment directly for local testing
-from src.jira_to_code.server.env import JiraToCodeEnv
+from server.env import JiraToCodeEnv
 from src.jira_to_code.models import JiraCodeAction
 
 # --- HACKATHON MANDATORY CONFIGURATION ---
