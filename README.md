@@ -2,7 +2,7 @@
 title: Jira-To-Code Agent Environment
 emoji: 🛠️
 colorFrom: indigo
-colorTo: slate
+colorTo: blue
 sdk: docker
 pinned: false
 license: mit
