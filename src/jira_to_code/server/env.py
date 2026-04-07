@@ -50,7 +50,7 @@ class JiraToCodeEnv(Environment):
                 tree.append(str(rel_path.relative_to(self.workspace_dir)))
         return tree
 
-    async def reset(self) -> JiraCodeObservation:
+    def reset(self) -> JiraCodeObservation:
         self.step_count = 0
         if self.workspace_dir and Path(self.workspace_dir).exists():
             shutil.rmtree(self.workspace_dir)
@@ -67,7 +67,7 @@ class JiraToCodeEnv(Environment):
             file_tree=self._get_file_tree()
         )
 
-    async def step(self, action: JiraCodeAction) -> Tuple[JiraCodeObservation, float, bool, Dict[str, Any]]:
+    def step(self, action: JiraCodeAction) -> Tuple[JiraCodeObservation, float, bool, Dict[str, Any]]:
         self.step_count += 1
         reward = 0.0
         done = False
@@ -130,9 +130,9 @@ class JiraToCodeEnv(Environment):
         )
         return obs, reward, done, {}
 
-    async def state(self) -> State:
+    def state(self) -> State:
         return State(episode_id=f"jira-{self.task_level}-{self.step_count}", step_count=self.step_count)
     
-    async def close(self):
+    def close(self):
         if self.workspace_dir and Path(self.workspace_dir).exists():
             shutil.rmtree(self.workspace_dir)
