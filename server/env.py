@@ -1,42 +1,77 @@
-# src/jira_to_code/server/env.py
+# server/env.py
 import os
+import re
 import shutil
 import tempfile
 import subprocess
 from pathlib import Path
 from typing import Tuple, Dict, Any
+import sys
 
 from openenv.core.env_server import Environment, State
 from src.jira_to_code.models import JiraCodeAction, JiraCodeObservation
+
 
 class JiraToCodeEnv(Environment):
     TASKS = {
         "easy": {
             "dir": "src/jira_to_code/tasks/easy",
-            "ticket": "TICKET-101: Fix the off-by-one bug in calculator.add() function. It should correctly sum two numbers."
+            "ticket": (
+                "TICKET-101: Fix the off-by-one bug in calculator.add() function. "
+                "It should correctly sum two numbers."
+            ),
+        },
+        "easy_2": {
+            "dir": "src/jira_to_code/tasks/easy_2",
+            "ticket": (
+                "TICKET-102: Fix the bug in string_utils.count_vowels(). "
+                "It currently only counts lowercase vowels but should be case-insensitive."
+            ),
         },
         "medium": {
             "dir": "src/jira_to_code/tasks/medium",
-            "ticket": "TICKET-201: Implement format_user_data in formatter.py. It should format dictionary data to 'LAST_NAME, First_name (Age: X)'. Handle missing age by defaulting to 'Unknown'."
+            "ticket": (
+                "TICKET-201: Implement format_user_data in formatter.py. "
+                "It should format dictionary data to 'LAST_NAME, First_name (Age: X)'. "
+                "Handle missing age by defaulting to 'Unknown'."
+            ),
+        },
+        "medium_2": {
+            "dir": "src/jira_to_code/tasks/medium_2",
+            "ticket": (
+                "TICKET-202: Implement validate_email() and validate_password() in validator.py. "
+                "Email: must have exactly one '@', at least 1 char before '@', a '.' after '@' with chars around it. "
+                "Password: at least 8 chars, one uppercase, one lowercase, one digit."
+            ),
         },
         "hard": {
             "dir": "src/jira_to_code/tasks/hard",
-            "ticket": "TICKET-301: Implement an LRUCache class in lru_cache.py with put() and get() methods. O(1) time complexity expected. Evict least recently used when capacity is reached."
-        }
+            "ticket": (
+                "TICKET-301: Implement an LRUCache class in lru_cache.py with put() and get() methods. "
+                "O(1) time complexity expected. Evict least recently used when capacity is reached."
+            ),
+        },
+        "hard_2": {
+            "dir": "src/jira_to_code/tasks/hard_2",
+            "ticket": (
+                "TICKET-302: Implement a DirectedGraph class in graph.py with add_edge(), "
+                "has_path() (BFS/DFS), and topological_sort() methods. "
+                "topological_sort() must return an empty list if a cycle is detected."
+            ),
+        },
     }
+
+    # Reward configuration
+    STEP_PENALTY = -0.01  # Small penalty per step to encourage efficiency
+    GRACE_STEPS = 3       # No penalty for first N steps (orientation phase)
 
     def __init__(self):
         super().__init__()
         self.step_count = 0
         self.workspace_dir = None
-        
-        # Determine which task to run based on environment variable (defaults to easy)
-        self.task_level = os.getenv("JIRA_TASK_LEVEL", "easy").lower()
-        if self.task_level not in self.TASKS:
-            self.task_level = "easy"
-            
-        self.task_source_dir = Path(self.TASKS[self.task_level]["dir"]).resolve()
-        self.jira_ticket = self.TASKS[self.task_level]["ticket"]
+        self.task_level = "easy"
+        self.task_source_dir = None
+        self.jira_ticket = ""
 
     def _get_file_tree(self) -> list[str]:
         if not self.workspace_dir:
@@ -50,21 +85,41 @@ class JiraToCodeEnv(Environment):
                 tree.append(str(rel_path.relative_to(self.workspace_dir)))
         return tree
 
+    @staticmethod
+    def _parse_pytest_results(output: str) -> tuple[int, int]:
+        """Extract (passed, total) from pytest output for partial-credit scoring."""
+        match_passed = re.search(r'(\d+) passed', output)
+        passed = int(match_passed.group(1)) if match_passed else 0
+        match_failed = re.search(r'(\d+) failed', output)
+        failed = int(match_failed.group(1)) if match_failed else 0
+        match_error = re.search(r'(\d+) error', output)
+        errors = int(match_error.group(1)) if match_error else 0
+        total = passed + failed + errors
+        return passed, max(total, 1)
+
     def reset(self) -> JiraCodeObservation:
         self.step_count = 0
         if self.workspace_dir and Path(self.workspace_dir).exists():
             shutil.rmtree(self.workspace_dir)
-            
+
+        # Re-read task level from environment variable on every reset
+        self.task_level = os.getenv("JIRA_TASK_LEVEL", "medium").lower()
+        if self.task_level not in self.TASKS:
+            self.task_level = "easy"
+
+        self.task_source_dir = Path(self.TASKS[self.task_level]["dir"]).resolve()
+        self.jira_ticket = self.TASKS[self.task_level]["ticket"]
+
         self.workspace_dir = tempfile.mkdtemp(prefix=f"jira_env_{self.task_level}_")
-        
+
         if self.task_source_dir.exists():
             shutil.copytree(self.task_source_dir, self.workspace_dir, dirs_exist_ok=True)
         else:
             print(f"Warning: Task directory {self.task_source_dir} not found!")
-            
+
         return JiraCodeObservation(
             jira_ticket=self.jira_ticket,
-            file_tree=self._get_file_tree()
+            file_tree=self._get_file_tree(),
         )
 
     def step(self, action: JiraCodeAction) -> Tuple[JiraCodeObservation, float, bool, Dict[str, Any]]:
@@ -78,7 +133,10 @@ class JiraToCodeEnv(Environment):
         workspace_path = Path(self.workspace_dir).resolve()
 
         try:
-            if action.action_type in ["read_file", "write_file"]:
+            if action.action_type == "list_files":
+                current_file_content = "\n".join(self._get_file_tree())
+
+            elif action.action_type in ["read_file", "write_file"]:
                 if not action.file_path:
                     error = "file_path must be provided for read/write actions."
                 else:
@@ -97,42 +155,69 @@ class JiraToCodeEnv(Environment):
                             target_path.parent.mkdir(parents=True, exist_ok=True)
                             target_path.write_text(action.content)
                             current_file_content = action.content
+                            reward = 0.05  # Small shaping reward for taking action
 
             elif action.action_type == "run_tests":
-                result = subprocess.run(["pytest"], cwd=self.workspace_dir, capture_output=True, text=True)
+                result = subprocess.run(
+                    [sys.executable, "-m", "pytest", "-v"],
+                    cwd=self.workspace_dir,
+                    capture_output=True, text=True, timeout=30,
+                )
                 test_output = result.stdout + "\n" + result.stderr
+                passed, total = self._parse_pytest_results(test_output)
+
                 if result.returncode == 0:
-                    reward = 0.5 
+                    # All tests pass — strong positive signal
+                    reward = 0.1 + 0.4 * (passed / total)
                 elif result.returncode == 1:
-                    reward = 0.1  
+                    # Some tests fail — partial credit
+                    reward = 0.1 * (passed / total)
                 else:
-                    reward = -0.1 
+                    # Collection error / crash
+                    reward = -0.1
 
             elif action.action_type == "submit":
-                result = subprocess.run(["pytest"], cwd=self.workspace_dir, capture_output=True, text=True)
+                result = subprocess.run(
+                    [sys.executable, "-m", "pytest", "-v"],
+                    cwd=self.workspace_dir,
+                    capture_output=True, text=True, timeout=30,
+                )
                 test_output = result.stdout + "\n" + result.stderr
+                passed, total = self._parse_pytest_results(test_output)
                 done = True
-                if result.returncode == 0:
-                    reward = 1.0  
-                else:
-                    reward = 0.0  
 
+                if result.returncode == 0:
+                    reward = 1.0  # Full marks
+                else:
+                    reward = 0.5 * (passed / total)  # Partial credit on submit
+
+        except subprocess.TimeoutExpired:
+            error = "Tests timed out after 30 seconds."
+            test_output = "TIMEOUT"
+            reward = -0.1
         except Exception as e:
             error = f"System error: {str(e)}"
-            reward = -0.2 
+            reward = -0.2
+
+        # Apply step penalty only after the grace period (first N steps are free)
+        if self.step_count > self.GRACE_STEPS:
+            reward += self.STEP_PENALTY
 
         obs = JiraCodeObservation(
             jira_ticket=self.jira_ticket,
             file_tree=self._get_file_tree(),
             current_file_content=current_file_content,
             test_output=test_output,
-            error=error
+            error=error,
         )
         return obs, reward, done, {}
 
     def state(self) -> State:
-        return State(episode_id=f"jira-{self.task_level}-{self.step_count}", step_count=self.step_count)
-    
+        return State(
+            episode_id=f"jira-{self.task_level}-{self.step_count}",
+            step_count=self.step_count,
+        )
+
     def close(self):
         if self.workspace_dir and Path(self.workspace_dir).exists():
             shutil.rmtree(self.workspace_dir)

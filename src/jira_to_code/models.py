@@ -4,7 +4,7 @@ from pydantic import Field
 from openenv.core.env_server import Action, Observation
 
 class JiraCodeAction(Action):
-    action_type: Literal["read_file", "write_file", "run_tests", "submit"]
+    action_type: Literal["read_file", "write_file", "list_files", "run_tests", "submit"]
     file_path: Optional[str] = Field(default=None, description="Path to the file to read or write")
     content: Optional[str] = Field(default=None, description="Code content to write to the file")
 

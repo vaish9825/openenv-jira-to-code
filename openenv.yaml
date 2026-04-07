@@ -2,4 +2,4 @@
 name: jira-to-code
 version: 0.1.0
 description: An environment where agents resolve Jira tickets by reading, writing, and testing code.
-entrypoint: src.jira_to_code.server.app:app
+entrypoint: server.app:app
