@@ -1,5 +1,0 @@
-openenv
-pydantic
-openai
-python-dotenv
-pytest
