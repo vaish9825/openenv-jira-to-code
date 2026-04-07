@@ -44,3 +44,8 @@ htmlcov/
 # OS-generated files
 .DS_Store
 Thumbs.db
+
+implementation_plan.md
+task.md
+walkthrough.md
+72b_eval.txt

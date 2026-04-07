@@ -83,6 +83,26 @@ docker run -p 7860:7860 jira-to-code
 
 ---
 
+## 🛠️ Deep Dive: Design & Rubric Alignment
+
+### 🎨 Creativity & Novelty
+*   **Real-World Software Engineering Domain**: While most RL environments focus on games or simplified logic, **Jira-To-Code** provides a high-stakes, documentation-driven coding domain. Agents are forced to interpret edge cases from docstrings (e.g., case-insensitivity in vowel counting) just like real developers.
+*   **Non-Sparse Reward Mechanics**: We move away from binary "Pass/Fail" signals. The environment rewards "Progress Toward Solution" by parsing intermediate test results.
+
+### 📈 Reward Signal Design
+The environment provides a dense, informative reward signal to guide agent learning:
+*   **Step Penalty (`-0.01`)**: Kicks in after 3 "Orientation Steps" (free search). This penalizes excessive `read_file` or redundant `run_tests` calls, forcing the agent to be decisive.
+*   **Action Shaping (`+0.05`)**: A small positive reinforcement for `write_file` actions, encouraging the agent to actively attempt implementation.
+*   **Linear Partial Credit**: Intermediate `run_tests` and the final `submit` rewards are calculated as `(passed_tests / total_tests)`. 
+    *   *Example*: Passing 2 out of 4 tests yields a **0.5x** reward multiplier for that step's base value.
+
+### 🧱 Episode & Workspace Design
+*   **Isolation & Reset**: Every `reset()` call generates a **cryptographically unique, isolated temporary directory**. This ensures the agent starts with a "Clean Slate" and prevents cross-contamination between tasks or episodes.
+*   **Atomic Boundaries**: An episode concludes when the agent calls `submit` or reaches `MAX_STEPS`.
+*   **Deterministic Grading**: Graders are based on hidden unit tests (`pytest`) that are immutable within the environment container, ensuring 100% reproducible scoring.
+
+---
+
 ## 🏆 Scoring Rubric Alignment
 
 This environment is optimized for high marks in the OpenEnv Hackathon:
