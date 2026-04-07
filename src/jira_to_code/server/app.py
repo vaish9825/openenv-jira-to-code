@@ -8,7 +8,7 @@ import uvicorn
 import os
 
 # ✅ Instantiate env (important)
-env = JiraToCodeEnv()
+env = JiraToCodeEnv
 
 # Create base app
 app = create_web_interface_app(env, JiraCodeAction, JiraCodeObservation)
