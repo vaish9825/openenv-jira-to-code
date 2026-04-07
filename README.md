@@ -42,11 +42,16 @@ Agents interact with the environment via a standardized FastAPI interface:
 
 ---
 
-## 🎯 Task Tiers
+## 🎯 Available Tasks
 
-1.  **Easy**: Bug fixes (Calculator off-by-one, String vowel counting).
-2.  **Medium**: Implementation from specs (User data formatter, Email/Password validator).
-3.  **Hard**: Complex logic (LRU Cache O(1), Directed Graph & Topological Sort).
+| Task ID | Level | Objective |
+| :--- | :--- | :--- |
+| `easy` | Easy | Fix off-by-one bug in `calculator.add()`. |
+| `easy_2` | Easy | Fix case-sensitivity bug in `string_utils.count_vowels()`. |
+| `medium` | Medium | Implement `format_user_data()` based on dictionary mapping specs. |
+| `medium_2` | Medium | Implement complex `Email` and `Password` validation logic. |
+| `hard` | Hard | Implement an `LRUCache` with $O(1)$ time complexity requirements. |
+| `hard_2` | Hard | Implement `DirectedGraph` with Pathfinding and Topological Sorting. |
 
 ---
 
