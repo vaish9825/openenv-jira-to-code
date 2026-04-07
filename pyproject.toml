@@ -22,4 +22,4 @@ build-backend = "hatchling.build"
 packages = ["src/jira_to_code"]
 
 [project.scripts]
-server = "server.app:main"
+server = "src.jira_to_code.server.app:main"

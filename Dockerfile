@@ -30,8 +30,5 @@ COPY src/ ./src/
 RUN chown -R appuser:appuser /app
 USER appuser
 
-# Expose the standard OpenEnv port
-EXPOSE 8000
-
-# The standard entrypoint required by OpenEnv
-CMD ["uvicorn", "src.jira_to_code.server.app:app", "--host", "0.0.0.0", "--port", "8000"]
+EXPOSE 7860
+CMD ["uvicorn", "src.jira_to_code.server.app:app", "--host", "0.0.0.0", "--port", "7860"]
