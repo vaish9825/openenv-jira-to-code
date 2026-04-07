@@ -15,12 +15,14 @@ load_dotenv()
 from src.jira_to_code.server.env import JiraToCodeEnv
 from src.jira_to_code.models import JiraCodeAction
 
-# Read from env (with fallbacks just in case)
-API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:11434/v1")
-MODEL_NAME = os.getenv("MODEL_NAME", "qwen3.5:2b")
-HF_TOKEN = os.getenv("HF_TOKEN", "dummy")
+# --- HACKATHON MANDATORY CONFIGURATION ---
+# The evaluator will inject these. If not present, fallback to HF cloud defaults, NOT localhost.
+API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
+MODEL_NAME = os.getenv("MODEL_NAME") or "Qwen/Qwen2.5-72B-Instruct" 
+HF_TOKEN = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
 
-TASK_NAME = "bug-fix"
+# For the baseline script, we loop through all 3 tasks to prove they work
+TASKS_TO_EVALUATE = ["easy", "medium", "hard"]
 BENCHMARK = "jira-to-code"
 MAX_STEPS = 20
 SUCCESS_SCORE_THRESHOLD = 1.0
