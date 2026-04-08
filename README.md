@@ -44,13 +44,30 @@ Agents interact with the environment via a standardized FastAPI interface:
 
 ## 🎯 Available Tasks (22 Total)
 
-We have expanded the suite to feature **5 Easy**, **10 Medium**, and **7 Hard** tasks.
-
-| Level | Task Count | Example Objectives |
-| :--- | :---: | :--- |
-| **Easy** | 5 | Dictionary `.get()` safety, Off-by-one pagination limits, Route typo fixing, String logic. |
-| **Medium** | 10 | The N+1 ORM Problem, Middleware Injection, Regex logic, Timezone Awareness, Config Merges, Cache Invalidation. |
-| **Hard** | 7 | Custom JSON parsers, OOM file generator optimizations, Asyncio deadlocks, Thread worker Queuing, Circular dependencies. |
+| Task ID | Level | Objective |
+| :--- | :--- | :--- |
+| `easy` | Easy | Fix off-by-one bug in `calculator.add()`. |
+| `easy_2` | Easy | Fix case-sensitivity bug in `string_utils.count_vowels()`. |
+| `easy_3` | Easy | API KeyError: use `.get()` with fallback for missing `phone_number`. |
+| `easy_4` | Easy | Off-by-One Pagination: Fix math index logic in `get_page_bounds`. |
+| `easy_5` | Easy | FastAPI Route Typo: Align `user_id` route param with function arg. |
+| `medium` | Medium | Implement `format_user_data()` dictionary mapping specs. |
+| `medium_2` | Medium | Implement complex `Email` and `Password` validation logic. |
+| `medium_3` | Medium | Missing Auth Middleware: Apply `@require_auth` to `/api/billing`. |
+| `medium_4` | Medium | ORM N+1 Problem: Rewrite fetches to use JOINs (`select_related`). |
+| `medium_5` | Medium | Regex Validation: Fix email regex to allow plus sign (`+`). |
+| `medium_6` | Medium | Error Handling: Add try/except fallback for currency rate timeouts. |
+| `medium_7` | Medium | Stale Cache: Add Redis invalidation to `update_user_profile`. |
+| `medium_8` | Medium | Timezone Naive: Make naive datetimes UTC aware. |
+| `medium_9` | Medium | State Machine: Add transition guards (CANCELLED -> SHIPPED). |
+| `medium_10` | Medium | Config Merge: Fix recursion logic for nested dict merges. |
+| `hard` | Hard | Implement `LRUCache` with $O(1)$ time complexity. |
+| `hard_2` | Hard | Implement `DirectedGraph` with BFS/DFS and Topological Sort. |
+| `hard_3` | Hard | Circular Dependency: Refactor `models/utils/config` via `base.py`. |
+| `hard_4` | Hard | Race Condition: Refactor threaded worker to use `queue.Queue`. |
+| `hard_5` | Hard | OOM Generator: Rewrite `readlines()` loop to use `yield` generators. |
+| `hard_6` | Hard | Implementation: Code `StripeGateway` matching `PaymentGateway` ABC. |
+| `hard_7` | Hard | Async Deadlock: Fix lock release safety using async context managers. |
 
 ---
 
