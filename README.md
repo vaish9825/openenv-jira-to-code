@@ -95,11 +95,11 @@ docker run -p 7860:7860 jira-to-code
 *   **Non-Sparse Reward Mechanics**: We move away from binary "Pass/Fail" signals. The environment rewards "Progress Toward Solution" by parsing intermediate test results.
 
 ### 📈 Reward Signal Design
-The environment provides a dense, informative reward signal to guide agent learning:
-*   **Step Penalty (`-0.01`)**: Kicks in after 3 "Orientation Steps" (free search). This penalizes excessive `read_file` or redundant `run_tests` calls, forcing the agent to be decisive.
+The environment provides a dense, informative reward signal to guide agent learning, ensuring all scores are strictly between 0 and 1 (0.01 to 0.99):
+*   **Minimum Reward (`0.01`)**: Every action, even those that would typically have a penalty (like redundant steps), returns a minimum reward of **0.01**. This ensures no negative rewards are ever encountered.
 *   **Action Shaping (`+0.05`)**: A small positive reinforcement for `write_file` actions, encouraging the agent to actively attempt implementation.
-*   **Linear Partial Credit**: Intermediate `run_tests` and the final `submit` rewards are calculated as `(passed_tests / total_tests)`. 
-    *   *Example*: Passing 2 out of 4 tests yields a **0.5x** reward multiplier for that step's base value.
+*   **Linear Partial Credit & Clamping**: Intermediate `run_tests` and the final `submit` rewards are calculated as `(passed_tests / total_tests)`. 
+    *   *Constraint*: The total episode score is strictly clamped between **0.01 and 0.99** to adhere to evaluation conventions. Match-passing 2 out of 4 tests yields a **0.5x** reward multiplier.
 
 ### 🧱 Episode & Workspace Design
 *   **Isolation & Reset**: Every `reset()` call generates a **cryptographically unique, isolated temporary directory**. This ensures the agent starts with a "Clean Slate" and prevents cross-contamination between tasks or episodes.

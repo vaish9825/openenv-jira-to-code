@@ -59,11 +59,11 @@ You operate in a sandboxed workspace. You can read files, write code, list files
 - "submit" — Final submission, runs tests and ends the episode (file_path and content should be null)
 
 ## Reward Structure
-- list_files / read_file: 0.0 (free information gathering)
-- write_file: +0.05 (small reward for taking action)
-- run_tests (all pass): +0.5 | run_tests (partial): proportional | run_tests (crash): -0.1
+- list_files / read_file: 0.01 (initial exploration)
+- write_file: +0.05 (reward for taking action)
+- run_tests (all pass): +0.5 | run_tests (partial): proportional | run_tests (crash): 0.01
 - submit (all pass): +1.0 | submit (partial): proportional
-- Every step: -0.01 penalty (be efficient!)
+- Every step: 0.01 minimum reward (be efficient!)
 
 ## JSON Schema
 {
@@ -268,7 +268,7 @@ def run_agent_episode(client: OpenAI, task_name: str) -> tuple:
                 messages.append({
                     "role": "user",
                     "content": (
-                        f"⚠️ ERROR: Your last response was not valid JSON.\n"
+                        f"ERROR: Your last response was not valid JSON.\n"
                         f"Parse error: {exc}\n"
                         f"You MUST respond with ONLY a valid JSON object. "
                         f"No markdown, no explanations.\nTry again."
@@ -278,6 +278,9 @@ def run_agent_episode(client: OpenAI, task_name: str) -> tuple:
             # Take step in environment
             obs, reward, done, _ = env.step(action)
             error = obs.error
+
+            # Ensure individual step rewards are strictly positive (min 0.01)
+            reward = max(reward, 0.01)
 
             rewards.append(reward)
             steps_taken = step
@@ -292,23 +295,23 @@ def run_agent_episode(client: OpenAI, task_name: str) -> tuple:
             # Phase 1: Append observation to conversation history
             obs_message = build_observation_message(step, obs, reward)
 
-            # Phase 4: Self-correction prompt injection on negative reward or error
-            if reward < 0 or obs.error:
+            # Phase 4: Self-correction prompt injection on low/negative reward or error
+            if reward <= 0.01 or obs.error:
                 obs_message += (
-                    f"\n\n⚠️ NEGATIVE RESULT (reward={reward:.2f})."
+                    f"\n\nLOW/NEGATIVE RESULT (reward={reward:.2f})."
                     f"\nCarefully analyze the error/test output above."
                     f"\nIdentify the root cause and write a fix."
                     f"\nDo NOT repeat the same action that just failed."
                 )
             elif reward >= 0.4:
                 obs_message += (
-                    "\n\n✅ Tests are passing! If all tests pass, use 'submit' to finalize."
+                    "\n\nTests are passing! If all tests pass, use 'submit' to finalize."
                 )
 
             messages.append({"role": "user", "content": obs_message})
 
-        # Calculate final score (clamp between 0 and 1)
-        score = min(max(sum(rewards), 0.0), 1.0)
+        # Calculate final score (clamp strictly between 0 and 1)
+        score = min(max(sum(rewards), 0.01), 0.99)
         success = score >= SUCCESS_SCORE_THRESHOLD
 
     finally:
