@@ -30,9 +30,9 @@ MODEL_NAME = os.getenv("MODEL_NAME") or "Qwen/Qwen2.5-72B-Instruct"
 HF_TOKEN = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
 
 BENCHMARK = "jira-to-code"
-MAX_STEPS = 15
+MAX_STEPS = 12
 SUCCESS_SCORE_THRESHOLD = 0.9  # Account for step penalties
-ALL_TASKS = ["easy", "easy_2", "medium", "medium_2", "hard", "hard_2"]
+ALL_TASKS = ["easy_2", "medium", "medium_2", "hard", "hard_2"]
 MAX_HISTORY_MESSAGES = 30  # Context-window safety: trim if exceeded
 MAX_RETRIES = 5            # Rate limit retry attempts
 RETRY_BASE_DELAY = 2       # Base delay in seconds for exponential backoff
@@ -360,6 +360,9 @@ def main() -> None:
             "success": success,
         })
         total_score += score
+
+        print("Waiting 60 seconds before next task to respect API limits...", flush=True)
+        time.sleep(60)
 
     # Summary
     print("\n" + "=" * 50, flush=True)
