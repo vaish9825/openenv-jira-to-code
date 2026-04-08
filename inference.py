@@ -30,9 +30,9 @@ MODEL_NAME = os.getenv("MODEL_NAME") or "Qwen/Qwen2.5-72B-Instruct"
 HF_TOKEN = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
 
 BENCHMARK = "jira-to-code"
-MAX_STEPS = 12
+# MAX_STEPS is now dynamic based on task level
 SUCCESS_SCORE_THRESHOLD = 0.9  # Account for step penalties
-ALL_TASKS = ["easy_2", "medium", "medium_2", "hard", "hard_2"]
+ALL_TASKS = list(JiraToCodeEnv.TASKS.keys())
 MAX_HISTORY_MESSAGES = 30  # Context-window safety: trim if exceeded
 MAX_RETRIES = 5            # Rate limit retry attempts
 RETRY_BASE_DELAY = 2       # Base delay in seconds for exponential backoff
@@ -210,13 +210,15 @@ def run_agent_episode(client: OpenAI, task_name: str) -> tuple:
     try:
         obs = env.reset()
 
+        task_max_steps = 10 if "easy" in task_name else 20
+
         # Phase 1: Episodic memory — persistent conversation history
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": build_observation_message(0, obs, 0.0)},
         ]
 
-        for step in range(1, MAX_STEPS + 1):
+        for step in range(1, task_max_steps + 1):
             trim_history(messages)
 
             # Call the LLM with rate-limit retry + exponential backoff
@@ -336,6 +338,8 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    import random
+
     # Determine which tasks to run
     if args.tasks:
         tasks = [t.strip() for t in args.tasks.split(",")]
@@ -345,7 +349,15 @@ def main() -> None:
             print(f"Available: {ALL_TASKS}", flush=True)
             return
     else:
-        tasks = ALL_TASKS
+        # Baseline inference: 1 easy, 1 medium, 1 hard randomly sampled
+        easies = [t for t in ALL_TASKS if "easy" in t]
+        mediums = [t for t in ALL_TASKS if "medium" in t]
+        hards = [t for t in ALL_TASKS if "hard" in t]
+        
+        tasks = []
+        if easies: tasks.append(random.choice(easies))
+        if mediums: tasks.append(random.choice(mediums))
+        if hards: tasks.append(random.choice(hards))
 
     print(f"Running tasks: {tasks}", flush=True)
 
@@ -364,8 +376,8 @@ def main() -> None:
         })
         total_score += score
 
-        print("Waiting 60 seconds before next task to respect API limits...", flush=True)
-        time.sleep(60)
+        print("Waiting 20 seconds before next task to respect API limits...", flush=True)
+        time.sleep(20)
 
     # Summary
     print("\n" + "=" * 50, flush=True)

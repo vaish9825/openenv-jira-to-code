@@ -28,6 +28,9 @@ class JiraToCodeEnv(Environment):
                 "It currently only counts lowercase vowels but should be case-insensitive."
             ),
         },
+        "easy_3": {"dir": "src/jira_to_code/tasks/easy_3", "ticket": "TICKET-E3: The API endpoint crashes with a KeyError when a user payload doesn't contain an optional 'phone_number' field. Change dictionary indexing to .get() with a fallback."},
+        "easy_4": {"dir": "src/jira_to_code/tasks/easy_4", "ticket": "TICKET-E4: Off-by-One Pagination. get_page_bounds(page, size) misses the 10th item on page 1. Fix the math index logic."},
+        "easy_5": {"dir": "src/jira_to_code/tasks/easy_5", "ticket": "TICKET-E5: FastAPI Route Typo. Route signature is id instead of user_id. Fix the parameter mismatch."},
         "medium": {
             "dir": "src/jira_to_code/tasks/medium",
             "ticket": (
@@ -44,6 +47,14 @@ class JiraToCodeEnv(Environment):
                 "Password: at least 8 chars, one uppercase, one lowercase, one digit."
             ),
         },
+        "medium_3": {"dir": "src/jira_to_code/tasks/medium_3", "ticket": "TICKET-M3: Missing Authentication Middleware. A sensitive endpoint (/api/billing) is exposed. Import @require_auth from auth.py and apply it to the route in routes.py."},
+        "medium_4": {"dir": "src/jira_to_code/tasks/medium_4", "ticket": "TICKET-M4: N+1 Database Problem. Rewrite the ORM query to use a JOIN (e.g., select_related)."},
+        "medium_5": {"dir": "src/jira_to_code/tasks/medium_5", "ticket": "TICKET-M5: Flawed Regex Validation. validate_email rejects emails with a plus sign. Update regex to allow user+test@gmail.com."},
+        "medium_6": {"dir": "src/jira_to_code/tasks/medium_6", "ticket": "TICKET-M6: Incomplete Error Handling. fetching currency rates crashes on timeout. Wrap in try/except and return a cached fallback value."},
+        "medium_7": {"dir": "src/jira_to_code/tasks/medium_7", "ticket": "TICKET-M7: Stale Cache Bug. update_user_profile updates DB but forgets to call redis.delete('user:id'). Invalidate the cache."},
+        "medium_8": {"dir": "src/jira_to_code/tasks/medium_8", "ticket": "TICKET-M8: Timezone Naive Conversion. Event scheduling function creates naive datetimes. Make them UTC aware."},
+        "medium_9": {"dir": "src/jira_to_code/tasks/medium_9", "ticket": "TICKET-M9: State Machine Loophole. Cart state machine allows CANCELLED to SHIPPED. Add transition guards."},
+        "medium_10": {"dir": "src/jira_to_code/tasks/medium_10", "ticket": "TICKET-M10: Config Merge Overwrite. YAML merge completely overwrites nested dictionaries. Fix recursion logic."},
         "hard": {
             "dir": "src/jira_to_code/tasks/hard",
             "ticket": (
@@ -59,6 +70,11 @@ class JiraToCodeEnv(Environment):
                 "topological_sort() must return an empty list if a cycle is detected."
             ),
         },
+        "hard_3": {"dir": "src/jira_to_code/tasks/hard_3", "ticket": "TICKET-H3: Circular Dependency Resolution. models.py, utils.py, config.py. Extract shared logic into base.py."},
+        "hard_4": {"dir": "src/jira_to_code/tasks/hard_4", "ticket": "TICKET-H4: Race Condition in Thread Worker. Refactor the architecture to use queue.Queue."},
+        "hard_5": {"dir": "src/jira_to_code/tasks/hard_5", "ticket": "TICKET-H5: OOM Generator Fix. Readlines causes crash on 5GB file. Rewrite to yield generators."},
+        "hard_6": {"dir": "src/jira_to_code/tasks/hard_6", "ticket": "TICKET-H6: Implement Abstract Base Class. Implement StripeGateway matching PaymentGateway abstract class."},
+        "hard_7": {"dir": "src/jira_to_code/tasks/hard_7", "ticket": "TICKET-H7: Deadlock in Asyncio. Route acquires threading.Lock but forgets to release on exception. Use async context managers."},
     }
 
     # Reward configuration
@@ -199,9 +215,14 @@ class JiraToCodeEnv(Environment):
             error = f"System error: {str(e)}"
             reward = -0.2
 
-        # Apply step penalty only after the grace period (first N steps are free)
-        if self.step_count > self.GRACE_STEPS:
-            reward += self.STEP_PENALTY
+        # Apply shaping rewards based on step count
+        if self.step_count <= 3:
+            reward += 0.02
+        else:
+            reward -= 0.01
+
+        # Enforce strictly bounded rewards for OpenEnv requirements (between 0.01 and 0.99)
+        reward = max(0.01, min(0.99, reward))
 
         obs = JiraCodeObservation(
             jira_ticket=self.jira_ticket,

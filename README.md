@@ -22,7 +22,7 @@ app_port: 7860
 
 *   **⚡ ReAct Ready**: Built-in support for Thought-Action-Observation loops.
 *   **🧠 Episodic Memory**: Maintains full conversational history for multi-turn reasoning.
-*   **📊 6 Diverse Tasks**: From simple bug fixes to complex data structure implementations.
+*   **📊 22 Diverse Tasks**: From simple bug fixes to complex architecture, concurrency, and security.
 *   **📈 Rich Reward Shaping**: Partial credit for passing tests, step penalties for efficiency, and shaping rewards for active coding.
 *   **🛡️ Robust Parsing**: Resilient JSON extraction and self-correction prompt injection.
 
@@ -42,16 +42,15 @@ Agents interact with the environment via a standardized FastAPI interface:
 
 ---
 
-## 🎯 Available Tasks
+## 🎯 Available Tasks (22 Total)
 
-| Task ID | Level | Objective |
-| :--- | :--- | :--- |
-| `easy` | Easy | Fix off-by-one bug in `calculator.add()`. |
-| `easy_2` | Easy | Fix case-sensitivity bug in `string_utils.count_vowels()`. |
-| `medium` | Medium | Implement `format_user_data()` based on dictionary mapping specs. |
-| `medium_2` | Medium | Implement complex `Email` and `Password` validation logic. |
-| `hard` | Hard | Implement an `LRUCache` with $O(1)$ time complexity requirements. |
-| `hard_2` | Hard | Implement `DirectedGraph` with Pathfinding and Topological Sorting. |
+We have expanded the suite to feature **5 Easy**, **10 Medium**, and **7 Hard** tasks.
+
+| Level | Task Count | Example Objectives |
+| :--- | :---: | :--- |
+| **Easy** | 5 | Dictionary `.get()` safety, Off-by-one pagination limits, Route typo fixing, String logic. |
+| **Medium** | 10 | The N+1 ORM Problem, Middleware Injection, Regex logic, Timezone Awareness, Config Merges, Cache Invalidation. |
+| **Hard** | 7 | Custom JSON parsers, OOM file generator optimizations, Asyncio deadlocks, Thread worker Queuing, Circular dependencies. |
 
 ---
 
@@ -95,11 +94,11 @@ docker run -p 7860:7860 jira-to-code
 *   **Non-Sparse Reward Mechanics**: We move away from binary "Pass/Fail" signals. The environment rewards "Progress Toward Solution" by parsing intermediate test results.
 
 ### 📈 Reward Signal Design
-The environment provides a dense, informative reward signal to guide agent learning, ensuring all scores are strictly between 0 and 1 (0.01 to 0.99):
-*   **Minimum Reward (`0.01`)**: Every action, even those that would typically have a penalty (like redundant steps), returns a minimum reward of **0.01**. This ensures no negative rewards are ever encountered.
-*   **Action Shaping (`+0.05`)**: A small positive reinforcement for `write_file` actions, encouraging the agent to actively attempt implementation.
-*   **Linear Partial Credit & Clamping**: Intermediate `run_tests` and the final `submit` rewards are calculated as `(passed_tests / total_tests)`. 
-    *   *Constraint*: The total episode score is strictly clamped between **0.01 and 0.99** to adhere to evaluation conventions. Match-passing 2 out of 4 tests yields a **0.5x** reward multiplier.
+The environment provides a dense, informative reward signal to guide agent learning, ensuring all step scores are strictly continuously bounded:
+*   **Strict Bounds (`0.01` to `0.99`)**: To comply with grading requirements, every step evaluated unconditionally maps to a boundary range strictly between 0 and 1. The literal 0.0 and 1.0 are actively bypassed.
+*   **Action & Thinking Weightage**: The first 3 orientation steps (e.g., listing/reading files, thinking) receive a `+0.02` bonus shaping token to reward early planning.
+*   **Efficiency Penalty**: For all steps beyond the 3rd step, a `-0.01` penalty is continuously applied to minimize rewards for agents taking excessively long.
+*   **Linear Partial Credit**: Intermediate `run_tests` and the final `submit` rewards are calculated proportionally as `(passed_tests / total_tests)`.
 
 ### 🧱 Episode & Workspace Design
 *   **Isolation & Reset**: Every `reset()` call generates a **cryptographically unique, isolated temporary directory**. This ensures the agent starts with a "Clean Slate" and prevents cross-contamination between tasks or episodes.
