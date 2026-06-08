@@ -137,9 +137,3 @@ This environment is optimized for high marks in the OpenEnv Hackathon:
 ## 📜 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-<div align="center">
-  <sub>Built with ❤️ for the OpenEnv Hackathon by <a href="https://huggingface.co/Navigam">Navigam</a></sub>
-</div>
