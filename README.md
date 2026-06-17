@@ -132,8 +132,3 @@ This environment is optimized for high marks in the OpenEnv Hackathon:
 *   **Environment Design**: Gymnasium-style API with comprehensive observation space.
 *   **Code Quality**: Passes `openenv validate` and follows strict Pydantic typing.
 
----
-
-## 📜 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
